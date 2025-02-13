@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>情人节烟花</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .love-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 0 0 10px #ff0066;
+            font-family: 'Microsoft Yahei', cursive;
+            z-index: 100;
+            animation: glow 2s ease-in-out infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; text-shadow: 0 0 20px #ff0066; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="love-text" id="loveText"></div>
+
+    <script>
+        // 烟花粒子类
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = 2;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 5,
+                    y: (Math.random() - 0.5) * 5
+                };
+                this.alpha = 1;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                this.draw();
+                this.velocity.x *= 0.99;
+                this.velocity.y *= 0.99;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.005;
+            }
+        }
+
+        // 烟花类
+        class Firework {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height;
+                this.targetY = Math.random() * (canvas.height / 1);
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.particles = [];
+                this.velocity = { x: 0, y: -8 };
+                this.exploded = false;
+            }
+
+            draw() {
+                if (!this.exploded) {
+                    ctx.globalAlpha = 1;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+            }
+
+            update() {
+                this.draw();
+                
+                if (!this.exploded) {
+                    this.y += this.velocity.y;
+                    if (this.y <= this.targetY) {
+                        this.explode();
+                    }
+                } else {
+                    this.particles.forEach((particle, index) => {
+                        if (particle.alpha <= 0) {
+                            this.particles.splice(index, 1);
+                        } else {
+                            particle.update();
+                        }
+                    });
+                }
+            }
+
+            explode() {
+                this.exploded = true;
+                for (let i = 0; i < 100; i++) {
+                    // 每个粒子随机生成不同颜色
+                    const particleColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                    this.particles.push(new Particle(this.x, this.y, particleColor));
+                }
+            }
+        }
+
+        // 初始化
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const texts = [
+            "老婆~",
+            "遇见你，是一切美好的开始",
+            "我想把全世界的彩虹都放进你心里",
+            "虽然今年情人节不在一起",
+            "不能带你去吃好吃的",
+            "今年过年你也没有看到烟花",
+            "所以我给你放了一个赛博烟花",
+            "虽然有点简陋",
+            "但是呢，这说明我的编程开始在路上了",
+            "我说不定会做一个我们的专属网页",
+            "我也还不会在网页里面放红包",
+            "所以你还是来找我要吧~",
+            "爱你老婆",
+        ];
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const fireworks = [];
+        let fireworkTimer = 0;
+
+        // 文字切换
+        const loveText = document.getElementById('loveText');
+        let textIndex = 0;
+        setInterval(() => {
+            loveText.style.opacity = 0;
+            setTimeout(() => {
+                textIndex = (textIndex + 1) % texts.length;
+                loveText.textContent = texts[textIndex];
+                loveText.style.opacity = 1;
+            }, 500);
+        }, 3000);
+
+        // 动画循环
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; // 调整背景透明度
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            fireworks.forEach((firework, index) => {
+                firework.update();
+                if (firework.exploded && firework.particles.length === 0) {
+                    fireworks.splice(index, 1);
+                }
+            });
+
+            if (fireworkTimer % 25 === 0) {
+                fireworks.push(new Firework());
+            }
+            fireworkTimer++;
+
+            requestAnimationFrame(animate);
+        }
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // 开始动画
+        animate();
+        loveText.textContent = texts[0];
+    </script>
+</body>
+</html>
